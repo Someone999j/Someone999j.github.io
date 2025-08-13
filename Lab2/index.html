@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Lab 2 — Examination & Observation Room</title>
+<style>
+  :root{
+    --bg:#0b1520; --panel:#0f1f2d; --accent:#2fd0ff; --text:#e7f3ff; --muted:#93a6b6;
+    --ok:#66e08a; --warn:#ffd166; --bad:#ff6b6b;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,Segoe UI,Roboto,Arial,sans-serif}
+  header{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid #153046;background:#0d1a27;position:sticky;top:0;z-index:5}
+  header .id{font-weight:700;letter-spacing:.3px}
+  header .nav a, header .nav button{margin-left:10px}
+  .btn{
+    background:linear-gradient(180deg,#1d3550,#122338);
+    color:var(--text);border:1px solid #25466a;border-radius:10px;
+    padding:10px 14px;cursor:pointer;box-shadow:0 4px 12px rgba(0,0,0,.25);
+    transition:.15s; font-weight:600
+  }
+  .btn:hover{transform:translateY(-1px);box-shadow:0 6px 16px rgba(0,0,0,.35)}
+  .btn.ghost{background:transparent;border-color:#2a4a6d}
+  .btn.small{padding:6px 10px;border-radius:8px;font-size:13px}
+  .grid{
+    display:grid;grid-template-columns: 360px 1fr 340px;gap:14px;padding:14px;
+  }
+  .card{
+    background:var(--panel);border:1px solid #1a3550;border-radius:14px;box-shadow:0 10px 24px rgba(0,0,0,.25);
+    padding:12px;
+  }
+  .title{font-size:14px;font-weight:800;letter-spacing:.25px;margin:2px 0 10px;color:#cfe8ff}
+  .muted{color:var(--muted);font-size:12px}
+  .specimen{
+    height:220px;display:flex;align-items:center;justify-content:center;border-radius:12px;background:linear-gradient(180deg,#0e2235,#0a1622);
+    position:relative; overflow:hidden; border:1px dashed #213a57
+  }
+  /* Simple rat avatar (SVG-ish via divs) */
+  .rat{
+    position:relative;width:200px;height:120px;animation:breath 3.3s ease-in-out infinite;
+    filter: drop-shadow(0 6px 12px rgba(0,0,0,.35));
+  }
+  .rat .body{position:absolute;left:20px;top:30px;width:140px;height:70px;background:#8c98a4;border-radius:40px}
+  .rat .head{position:absolute;left:140px;top:40px;width:60px;height:50px;background:#98a3af;border-radius:30px}
+  .rat .ear{position:absolute;left:160px;top:24px;width:20px;height:20px;background:#c7a0a0;border-radius:50%}
+  .rat .eye{position:absolute;left:184px;top:60px;width:8px;height:8px;background:#0b0f14;border-radius:50%}
+  .rat .nose{position:absolute;left:198px;top:62px;width:8px;height:8px;background:#c78f8f;border-radius:50%}
+  .rat .leg{position:absolute;top:84px;width:12px;height:18px;background:#7f8b98;border-radius:6px}
+  .rat .leg.l1{left:60px}.rat .leg.l2{left:100px}.rat .leg.l3{left:140px}
+  .rat .tail{position:absolute;left:-20px;top:56px;width:110px;height:6px;background:#c7a0a0;border-radius:6px;transform:rotate(-10deg);transform-origin:100% 50%;animation:tail 4s ease-in-out infinite}
+  @keyframes breath{0%,100%{transform:translateY(0)}50%{transform:translateY(-2px)}}
+  @keyframes tail{0%,100%{transform:rotate(-10deg)}50%{transform:rotate(-2deg)}}
+
+  .tools{display:flex;gap:10px;flex-wrap:wrap}
+  .tag{font-size:12px;border:1px solid #2a4a6d;color:#cfe8ff;border-radius:999px;padding:4px 8px}
+  .vitals{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:10px}
+  .metric{background:#102235;border:1px solid #1c3550;border-radius:10px;padding:8px}
+  .metric .label{font-size:11px;color:#9db6c8}
+  .metric .val{font-weight:800;margin-top:2px}
+  canvas{background:#04121d;border:1px solid #173149;border-radius:10px}
+  .tabs{display:flex;gap:8px;margin:6px 0 10px}
+  .tabs .tab{padding:8px 10px;border-radius:10px;border:1px solid #2a4a6d;cursor:pointer}
+  .tabs .tab.active{background:#142b42}
+  .examPanel{display:none}
+  .examPanel.active{display:block}
+  .log{height:160px;overflow:auto;background:#0c1b29;border:1px solid #1a3550;border-radius:10px;padding:8px;font-size:12px}
+  .notes textarea{width:100%;min-height:120px;background:#0c1b29;border:1px solid #1a3550;border-radius:10px;color:var(--text);padding:10px}
+  .footer{display:flex;gap:8px;justify-content:flex-end;margin-top:10px}
+  .mini{font-size:12px;color:#9db6c8}
+  /* overlay summary */
+  .overlay{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(5,10,18,.8);z-index:50}
+  .sheet{width:min(920px,94vw);max-height:88vh;overflow:auto;background:#0f1f2d;border:1px solid #1d3860;border-radius:16px;padding:14px}
+  .sheet h3{margin:2px 0 10px}
+  .row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .saveRow{display:flex;gap:8px;justify-content:flex-end;margin-top:8px}
+  .hidden{display:none !important}
+</style>
+</head>
+<body>
+<header>
+  <div class="id">Lab 2 — Examination & Observation</div>
+  <div class="nav">
+    <button class="btn ghost small" id="backLab1">← Lab 1</button>
+    <button class="btn small" id="toLab3">→ Lab 3</button>
+  </div>
+</header>
+
+<div class="grid">
+  <!-- LEFT: Specimen + quick vitals -->
+  <section class="card">
+    <div class="title">Specimen</div>
+    <div class="specimen">
+      <div class="rat" id="rat">
+        <div class="body"></div><div class="head"></div><div class="ear"></div>
+        <div class="eye"></div><div class="nose"></div>
+        <div class="tail"></div>
+        <div class="leg l1"></div><div class="leg l2"></div><div class="leg l3"></div>
+      </div>
+    </div>
+    <div class="tools" style="margin-top:8px">
+      <span class="tag" id="stethoscope">Stethoscope</span>
+      <span class="tag" id="stress">Trigger Stress</span>
+      <span class="tag" id="calm">Calm Patient</span>
+      <span class="tag" id="record">Record Reading</span>
+      <span class="tag" id="summary">Open Session Summary</span>
+    </div>
+    <div class="vitals">
+      <div class="metric"><div class="label">Heart Rate (bpm)</div><div class="val" id="mHR">—</div></div>
+      <div class="metric"><div class="label">BP (sys/dia)</div><div class="val" id="mBP">—</div></div>
+      <div class="metric"><div class="label">Resp Rate (/min)</div><div class="val" id="mRR">—</div></div>
+      <div class="metric"><div class="label">Coordination</div><div class="val" id="mCoord">—</div></div>
+      <div class="metric"><div class="label">Liver Load</div><div class="val" id="mLiver">—</div></div>
+      <div class="metric"><div class="label">Brain Load</div><div class="val" id="mBrain">—</div></div>
+    </div>
+    <div class="mini" id="specMeta" style="margin-top:6px">ID: — · Weight: —g · From Lab 1</div>
+  </section>
+
+  <!-- CENTER: Live chart + tabs -->
+  <section class="card">
+    <div class="title">Live Monitor (Lab 2 fresh)</div>
+    <canvas id="live" width="820" height="220"></canvas>
+    <div class="mini" style="margin-top:6px">Shows HR / BPsys / Coordination over time. Neutral only.</div>
+
+    <div class="tabs" id="tabs">
+      <div class="tab active" data-tab="exam1">Exam 1 — Checkup</div>
+      <div class="tab" data-tab="exam2">Exam 2 — Exercise</div>
+      <div class="tab" data-tab="exam3">Exam 3 — Balance</div>
+      <div class="tab" data-tab="exam4">Exam 4 — Memory</div>
+      <div class="tab" data-tab="exam5">Exam 5 — Bloodwork</div>
+    </div>
+
+    <div class="examPanel active" id="exam1">
+      <div class="muted">General vital readouts. Use <b>Record Reading</b> to append to Exam 1 notes. The live chart is fresh for Lab 2.</div>
+    </div>
+    <div class="examPanel" id="exam2"><div class="muted">Exercise stimulus placeholder (to wire later). Readings can be recorded pre/post.</div></div>
+    <div class="examPanel" id="exam3"><div class="muted">Balance test placeholder (to wire later).</div></div>
+    <div class="examPanel" id="exam4"><div class="muted">Memory test placeholder (to wire later).</div></div>
+    <div class="examPanel" id="exam5"><div class="muted">Blood draw & basic panels placeholder (to wire later).</div></div>
+  </section>
+
+  <!-- RIGHT: Log + Notes + Export -->
+  <section class="card">
+    <div class="title">Event Log</div>
+    <div class="log" id="log"></div>
+
+    <div class="title" style="margin-top:10px">Lab 2 Notes</div>
+    <div class="notes">
+      <textarea id="notes" placeholder="Your observations only. (Neutral numbers, your words — no auto diagnosis.)"></textarea>
+    </div>
+
+    <div class="footer">
+      <button class="btn ghost" id="exportTxt">Export Lab 2 Summary (TXT)</button>
+      <button class="btn" id="exportPng">Export Chart (PNG)</button>
+    </div>
+  </section>
+</div>
+
+<!-- Overlay: Session Summary -->
+<div class="overlay" id="overlay">
+  <div class="sheet">
+    <h3>Lab 2 Session Summary</h3>
+    <div class="row">
+      <div>
+        <div class="title">Vitals Summary (numbers only)</div>
+        <div id="sumVitals" class="muted">—</div>
+        <div class="title" style="margin-top:10px">Notes (you)</div>
+        <textarea id="sumNotes" placeholder="Your notes here… (This will be saved and sent to Lab 3.)"></textarea>
+      </div>
+      <div>
+        <div class="title">Frozen Chart</div>
+        <canvas id="frozen" width="820" height="220"></canvas>
+        <div class="mini">This is the full Lab 2 timeline snapshot.</div>
+      </div>
+    </div>
+    <div class="saveRow">
+      <button class="btn ghost" id="closeSummary">Close</button>
+      <button class="btn" id="saveAndToLab3">Save & Send to Lab 3</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ====== Utilities ====== */
+const $ = sel => document.querySelector(sel);
+const logBox = $('#log');
+function log(msg){
+  const t = new Date().toLocaleTimeString();
+  logBox.innerHTML += `[${t}] ${msg}<br>`;
+  logBox.scrollTop = logBox.scrollHeight;
+}
+
+/* ====== Case load from Lab 1 ====== */
+let caseFromLab1 = null;   // what Lab 1 saved for Lab 2 (neutral)
+let specimen = {
+  id: '—', weight_g: 300, hr: 260, bp_sys: 110, bp_dia: 80, rr: 90, coord: 80,
+  liver: 10, brain: 10
+};
+let lab1SummaryTxt = '';    // carry-forward text if you want to review
+let lab1ChartPng = '';      // optional, if you later store an image data url
+
+(function loadCase(){
+  try{
+    const raw = localStorage.getItem('lab2_pending_case');
+    if(raw){
+      caseFromLab1 = JSON.parse(raw);
+      specimen.id = caseFromLab1.id || specimen.id;
+      specimen.weight_g = caseFromLab1.weight_g || specimen.weight_g;
+      // start Lab 2 baseline near last Lab 1 reading (neutral)
+      if(caseFromLab1.hr) specimen.hr = Math.max(40, Math.min(400, Math.round(caseFromLab1.hr)));
+      if(caseFromLab1.bp) {
+        const [s,d] = String(caseFromLab1.bp).split('/');
+        specimen.bp_sys = +s || specimen.bp_sys;
+        specimen.bp_dia = +d || specimen.bp_dia;
+      }
+      if(caseFromLab1.coord!=null) specimen.coord = Math.max(0, Math.min(100, Math.round(caseFromLab1.coord)));
+      if(caseFromLab1.rr) specimen.rr = Math.max(30, Math.min(200, Math.round(caseFromLab1.rr)));
+      if(caseFromLab1.liver!=null) specimen.liver = Math.max(0, Math.min(100, Math.round(caseFromLab1.liver)));
+      if(caseFromLab1.brain!=null) specimen.brain = Math.max(0, Math.min(100, Math.round(caseFromLab1.brain)));
+      lab1SummaryTxt = caseFromLab1.lab1SummaryTxt || '';
+      lab1ChartPng   = caseFromLab1.lab1ChartPng   || '';
+      log('Case loaded from Lab 1.');
+    } else {
+      log('No Lab 1 case found — using default baseline.');
+    }
+  }catch(e){ console.warn(e); log('Error loading case; using defaults.'); }
+  // paint header/meta
+  $('#specMeta').textContent = `ID: ${specimen.id} · Weight: ${specimen.weight_g}g · From Lab 1`;
+  updateVitalsUI();
+})();
+
+/* ====== Live chart (fresh for Lab 2) ====== */
+const live = $('#live'), lctx = live.getContext('2d');
+let history = [];        // {t, hr, bp, coord}
+let t0 = Date.now();
+let stress = false;
+let rafId;
+
+function updateVitalsSim(){
+  // neutral small drift; stress raises HR/BP and lowers coord slightly
+  const drift = () => (Math.random()*2-1);
+  const factor = stress ? 1.08 : 1.0;
+
+  specimen.hr = Math.max(40, Math.min(400, Math.round(specimen.hr*0.98*factor + 0.02*(260 + drift()*15))));
+  specimen.bp_sys = Math.max(70, Math.min(200, Math.round(specimen.bp_sys*0.98*factor + 0.02*(110 + drift()*10))));
+  specimen.bp_dia = Math.max(40, Math.min(140, Math.round(specimen.bp_dia*0.99 + 0.01*(80 + drift()*6))));
+  specimen.coord = Math.max(0, Math.min(100, Math.round(specimen.coord*0.99 + 0.01*(stress?72:82) + (stress?-0.2:0.2))));
+  specimen.rr = Math.max(30, Math.min(200, Math.round(specimen.rr*0.99*factor + 0.01*(90 + drift()*8))));
+  // loads stay visible but neutral (no auto-diagnosis)
+  specimen.liver = Math.max(0, Math.min(100, Math.round(specimen.liver*0.995 + (stress?0.03:0.01))));
+  specimen.brain = Math.max(0, Math.min(100, Math.round(specimen.brain*0.995 + (stress?0.04:0.02))));
+}
+
+function pushPoint(){
+  const t = (Date.now()-t0)/1000;
+  history.push({t, hr: specimen.hr, bp: specimen.bp_sys, coord: specimen.coord});
+  if(history.length>900) history.shift();
+}
+
+function drawLive(){
+  lctx.clearRect(0,0,live.width,live.height);
+  // axes
+  lctx.strokeStyle = '#12314a'; lctx.lineWidth = 1;
+  lctx.strokeRect(40,16, live.width-60, live.height-40);
+
+  const x0=40, y0=16, w=live.width-60, h=live.height-40;
+  const maxPoints = history.length || 1;
+  const xAt = i => x0 + (i/(Math.max(1,maxPoints-1)))*w;
+  const yMap = (v, min, max) => y0 + (1 - (v-min)/(max-min))*h;
+
+  // tracks
+  const drawLine = (getter, color, min, max) =>{
+    lctx.beginPath(); lctx.strokeStyle=color; lctx.lineWidth=2;
+    history.forEach((p,i)=>{
+      const x=xAt(i), y=yMap(getter(p),min,max);
+      if(i===0) lctx.moveTo(x,y); else lctx.lineTo(x,y);
+    });
+    lctx.stroke();
+  };
+  drawLine(p=>p.hr,   '#ff5d5d', 40, 400);
+  drawLine(p=>p.bp,   '#00c2ff', 70, 200);
+  drawLine(p=>p.coord,'#ffe066', 0, 100);
+}
+
+function tick(){
+  updateVitalsSim();
+  pushPoint();
+  drawLive();
+  updateVitalsUI();
+  rafId = requestAnimationFrame(tick);
+}
+
+function updateVitalsUI(){
+  $('#mHR').textContent = specimen.hr+'';
+  $('#mBP').textContent = specimen.bp_sys+'/'+specimen.bp_dia;
+  $('#mRR').textContent = specimen.rr+'';
+  $('#mCoord').textContent = specimen.coord+'%';
+  $('#mLiver').textContent = specimen.liver+'%';
+  $('#mBrain').textContent = specimen.brain+'%';
+}
+
+/* start */
+tick();
+
+/* ====== Exams / Controls ====== */
+$('#stethoscope').addEventListener('click', ()=>{ log('Stethoscope reading taken.'); });
+$('#stress').addEventListener('click', ()=>{ stress=true; log('Stress applied.'); });
+$('#calm').addEventListener('click', ()=>{ stress=false; log('Patient calmed.'); });
+$('#record').addEventListener('click', ()=>{
+  const p = history[history.length-1];
+  if(!p){ log('No reading yet.'); return; }
+  const activeTab = document.querySelector('.tab.active')?.dataset.tab || 'exam1';
+  log(`Recorded reading to ${activeTab}: HR ${p.hr}, BPsys ${p.bp}, Coord ${p.coord}`);
+});
+  /* Tabs */
+document.querySelectorAll('.tab').forEach(t=>{
+  t.addEventListener('click', ()=>{
+    document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+    document.querySelectorAll('.examPanel').forEach(x=>x.classList.remove('active'));
+    t.classList.add('active');
+    $('#'+t.dataset.tab).classList.add('active');
+  });
+});
+
+/* ====== Export: TXT + PNG ====== */
+function summarizeNumbers(){
+  if(history.length<1) return { text:'No data.', stats:null };
+  const hrs = history.map(p=>p.hr);
+  const bps = history.map(p=>p.bp);
+  const cds = history.map(p=>p.coord);
+  const min = a => Math.min(...a);
+  const max = a => Math.max(...a);
+  const avg = a => Math.round(a.reduce((s,x)=>s+x,0)/a.length);
+
+  const stats = {
+    hr:{min:min(hrs), max:max(hrs), avg:avg(hrs)},
+    bp:{min:min(bps), max:max(bps), avg:avg(bps)},
+    coord:{min:min(cds), max:max(cds), avg:avg(cds)},
+    rr: specimen.rr, liver: specimen.liver, brain: specimen.brain
+  };
+
+  const text = `
+Specimen ID: ${specimen.id}
+Session: Lab 2 (Examination)
+
+Vitals Summary (Lab 2 fresh):
+  HR (bpm)       - min ${stats.hr.min}, max ${stats.hr.max}, avg ${stats.hr.avg}
+  BPsys (mmHg)   - min ${stats.bp.min}, max ${stats.bp.max}, avg ${stats.bp.avg}
+  Coordination % - min ${stats.coord.min}, max ${stats.coord.max}, avg ${stats.coord.avg}
+  RR (/min): ${stats.rr}
+  Liver load %: ${stats.liver}
+  Brain load %: ${stats.brain}
+
+Notes (player):
+${($('#notes').value||'[No notes entered]')}
+`.trim();
+  return { text, stats };
+}
+
+function downloadTxtFile(filename, content){
+  const blob = new Blob([content], {type:'text/plain'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = filename;
+  a.click();
+  setTimeout(()=>URL.revokeObjectURL(a.href), 2000);
+}
+
+function downloadCanvasPNG(canvas, filename){
+  const a = document.createElement('a');
+  a.href = canvas.toDataURL('image/png');
+  a.download = filename;
+  a.click();
+}
+
+/* Exports from right panel */
+$('#exportTxt').addEventListener('click', ()=>{
+  const {text} = summarizeNumbers();
+  downloadTxtFile(`Specimen_${specimen.id}_Lab2_Session.txt`, text);
+  log('Lab 2 TXT exported.');
+});
+$('#exportPng').addEventListener('click', ()=>{
+  downloadCanvasPNG(live, `Specimen_${specimen.id}_Lab2_LiveChart.png`);
+  log('Lab 2 chart PNG exported.');
+});
+
+/* ====== Overlay Summary (with frozen chart) ====== */
+const overlay = $('#overlay');
+const frozen = $('#frozen'), fctx = frozen.getContext('2d');
+
+function drawFrozen(){
+  // draw current history into frozen canvas (full timeline)
+  fctx.clearRect(0,0,frozen.width,frozen.height);
+  fctx.fillStyle='#04121d'; fctx.fillRect(0,0,frozen.width,frozen.height);
+
+  const x0=40, y0=16, w=frozen.width-60, h=frozen.height-40;
+  const maxPoints = history.length || 1;
+  const xAt = i => x0 + (i/(Math.max(1,maxPoints-1)))*w;
+  const yMap = (v, min, max) => y0 + (1 - (v-min)/(max-min))*h;
+
+  const line = (getter,color,min,max)=>{
+    fctx.beginPath(); fctx.strokeStyle=color; fctx.lineWidth=2;
+    history.forEach((p,i)=>{
+      const x=xAt(i), y=yMap(getter(p),min,max);
+      if(i===0) fctx.moveTo(x,y); else fctx.lineTo(x,y);
+    });
+    fctx.stroke();
+  };
+  // frame
+  fctx.strokeStyle='#12314a'; fctx.strokeRect(x0,y0,w,h);
+  // series
+  line(p=>p.hr,   '#ff5d5d', 40, 400);
+  line(p=>p.bp,   '#00c2ff', 70, 200);
+  line(p=>p.coord,'#ffe066', 0, 100);
+}
+
+function openSummary(){
+  const { text } = summarizeNumbers();
+  $('#sumVitals').textContent = text;
+  $('#sumNotes').value = $('#notes').value || '';
+  drawFrozen();
+  overlay.style.display='flex';
+}
+$('#summary').addEventListener('click', openSummary);
+$('#closeSummary').addEventListener('click', ()=> overlay.style.display='none');
+
+/* ====== Navigation (merge & send to Lab 3) ====== */
+function buildLab2Payload(){
+  const { text } = summarizeNumbers();
+  const payload = {
+    id: specimen.id,
+    weight_g: specimen.weight_g,
+    hr: specimen.hr,
+    bp: specimen.bp_sys + '/' + specimen.bp_dia,
+    rr: specimen.rr,
+    coord: specimen.coord,
+    liver: specimen.liver,
+    brain: specimen.brain,
+    time: Date.now(),
+    history,                    // Lab 2 timeline
+    lab2SummaryTxt: text,       // your neutral summary text
+    lab2ChartPng: live.toDataURL('image/png')
+  };
+  return payload;
+}
+
+function sendToLab3(){
+  // Merge Lab 1 info (if present) + Lab 2 payload
+  const lab2 = buildLab2Payload();
+  // keep Lab 1 summary alongside Lab 2
+  lab2.lab1SummaryTxt = lab1SummaryTxt || '';
+  lab2.lab1ChartPng   = lab1ChartPng   || '';
+
+  try{
+    localStorage.setItem('lab3_pending_case', JSON.stringify(lab2));
+    log('Case saved to Lab 3 (lab3_pending_case).');
+  }catch(e){ console.warn(e); log('Save to Lab 3 failed.'); }
+
+  // Also offer downloads right here for your records
+  downloadTxtFile(`Specimen_${specimen.id}_Lab2_Session.txt`, lab2.lab2SummaryTxt);
+  downloadCanvasPNG(frozen, `Specimen_${specimen.id}_Lab2_FrozenChart.png`);
+
+  // Go to Lab 3
+  window.location.href = 'lab3.html';
+}
+
+$('#saveAndToLab3').addEventListener('click', ()=>{// copy overlay notes back to main notes before send
+  $('#notes').value = $('#sumNotes').value;
+  sendToLab3();
+});
+
+/* Header nav buttons */
+$('#backLab1').addEventListener('click', ()=>{
+  log('Returning to Lab 1…');
+  window.location.href = 'index.html';
+});
+$('#toLab3').addEventListener('click', openSummary); // force review before sending
+
+</script>
+</body>
+</html>
