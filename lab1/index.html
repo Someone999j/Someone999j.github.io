@@ -187,41 +187,6 @@ canvas{width:100%;height:200px;border-radius:6px;background:transparent}
   </div>
 </div>
 
-<!-- Post-mortem overlay -->
-<div class="overlay" id="overlay">
-  <div class="report">
-    <div style="display:flex;justify-content:space-between;align-items:center">
-      <h2>Post-mortem Report</h2>
-      <div><button id="downloadReport" class="btn ghost">Save Report</button> <button id="closeReport" class="btn ghost">Close</button></div>
-    </div>
-
-    <div class="reportSection" id="pmVitals">
-      <strong>Final Vital Signs</strong>
-      <div id="pmVitalsBody" style="margin-top:8px"></div>
-    </div>
-
-    <div class="reportSection" id="pmCause">
-      <strong>Primary Cause</strong>
-      <div id="pmCauseBody" style="margin-top:8px"></div>
-    </div>
-
-    <div class="reportSection" id="pmOrgans">
-      <strong>Organ strain summary</strong>
-      <div id="pmOrgansBody" style="margin-top:8px"></div>
-    </div>
-
-    <div class="reportSection" id="pmChart">
-      <strong>Time-series (t,health,coord,hr)</strong>
-      <pre id="pmChartBody" style="white-space:pre-wrap;margin-top:8px;font-size:12px"></pre>
-    </div>
-
-    <div class="reportSection" id="pmNotes">
-      <strong>Notes</strong>
-      <div id="pmNotesBody" style="margin-top:8px"></div>
-    </div>
-  </div>
-</div>
-
 <script>
 /* Lab 1 — Final build with continuous-scrolling straight-line chart showing last windowSeconds (default 60s).
    Features: congenital hints, drag & drop syringe/pill, stabilizer, PK/PD, post-mortem, save-to-Lab3, Save postmortem.
@@ -361,7 +326,9 @@ function showReact(kind){
   setTimeout(()=> b.style.display='none',800);
   const body = $('ratBody'); body.classList.add('pulse'); setTimeout(()=> body.classList.remove('pulse'),700);
 }
-
+<button id="giveBtn" class="btn">Give (click)</button>
+<button id="saveBtn" class="btn ghost" onclick="sendToLab3()">Save & Send to Lab 3</button>
+<button id="dnaBtn" class="btn ghost" onclick="sendToLab2()">Send DNA → Lab 2</button>
 // Visual hint triggers
 function triggerBreathIrregular(){ const b=$('ratBody'); b.style.animationDuration='1200ms'; setTimeout(()=> b.style.animationDuration='2600ms',900); }
 function triggerTwitch(){ const b=$('ratBody'); b.classList.add('twitchy'); setTimeout(()=> b.classList.remove('twitchy'),1200); }
@@ -423,54 +390,60 @@ function drawChart(){
 // Update UI
   <a href="../lab2/index.html">Go to Lab 2</a>
   
-function sendToLab2(){
-  const notes = prompt("Enter any notes for this specimen before sending to Lab 2:", getPlayerNotes() || "");
-  if (notes !== null) {
-    setPlayerNotes(notes); // if you have this helper, store the notes
-  }
-function exportCaseData(playerNotes){
-  if (playerNotes === undefined) {
-    playerNotes = getPlayerNotes();
-  }
-  function exportCaseData() {
-  // --- Create TXT case summary ---
-  const id = specimen.id;
-  const date = new Date().toISOString().split('T')[0];
-  
-  let txt = `Specimen ID: ${id}\nSession Date: ${date}\n\n`;
-  txt += `Vitals Summary:\n`;
-  txt += `  BP: low ${history.reduce((a,b) => a.bp_sys < b.bp_sys ? a : b).bp_sys}/${history.reduce((a,b) => a.bp_dia < b.bp_dia ? a : b).bp_dia} — high ${history.reduce((a,b) => a.bp_sys > b.bp_sys ? a : b).bp_sys}/${history.reduce((a,b) => a.bp_dia > b.bp_dia ? a : b).bp_dia}\n`;
-  txt += `  HR: low ${Math.min(...history.map(h => h.hr))} bpm — high ${Math.max(...history.map(h => h.hr))} bpm\n`;
-  txt += `  Coordination: variable\n  Health Index: mostly stable, brief fluctuations\n\n`;
-  
-  txt += `Session Observations:\n  [Player notes from chart & vitals here]\n\n`;
-  
-  txt += `Conclusion Prompt:\n  — No definitive diagnosis. Continue investigation. —\n\n`;
-  
-  txt += `Notes (player):\n  ______________________________________________\n  ______________________________________________\n  ______________________________________________\n`;
-  
-  // Save TXT file
-  const txtBlob = new Blob([txt], { type: 'text/plain' });
-  const txtUrl = URL.createObjectURL(txtBlob);
-  const txtLink = document.createElement('a');
-  txtLink.href = txtUrl;
-  txtLink.download = `${id}_session_summary.txt`;
-  txtLink.click();
-  URL.revokeObjectURL(txtUrl);
+function exportCaseData(){
+  // --- 1. Gather session summary ---
+  const bpValues = history.map(h => `${h.bp_sys}/${h.bp_dia}`);
+  const bpNumbers = history.map(h => ({ sys: h.bp_sys, dia: h.bp_dia }));
+  const hrValues = history.map(h => h.hr);
 
-  // --- Create PNG frozen chart ---
-  drawFrozenChart(); // Make sure it's rendered
-  frozenCanvas.toBlob(blob => {
-    const pngUrl = URL.createObjectURL(blob);
-    const pngLink = document.createElement('a');
-    pngLink.href = pngUrl;
-    pngLink.download = `${id}_chart.png`;
-    pngLink.click();
-    URL.revokeObjectURL(pngUrl);
-  });
-}
-}
+  const minBP = bpNumbers.reduce((a, b) => a.sys < b.sys ? a : b);
+  const maxBP = bpNumbers.reduce((a, b) => a.sys > b.sys ? a : b);
+  const minHR = Math.min(...hrValues);
+  const maxHR = Math.max(...hrValues);
+
+  let summary = `Specimen ID: ${specimen.id}\nSession Date: ${new Date().toLocaleString()}\n\n`;
+  summary += `Vitals Summary:\n`;
+  summary += `  BP: low ${minBP.sys}/${minBP.dia} — high ${maxBP.sys}/${maxBP.dia}\n`;
+  summary += `  HR: low ${minHR} bpm — high ${maxHR} bpm\n`;
+  summary += `  Coordination: ${Math.round(specimen.coord)}%\n`;
+  summary += `  Health Index: ${Math.round(specimen.health)}%\n\n`;
+
+  summary += `Session Observations:\n`;
+  summary += `  ${eventLog.filter(e => !e.toLowerCase().includes("diagnosis")).join("\n  ")}\n\n`;
+
+  summary += `Conclusion Prompt:\n`;
+  summary += `  — No definitive diagnosis. Continue investigation. —\n\n`;
+
+  const notes = document.getElementById("pmNotesInput")?.value || "";
+  summary += `Notes (player):\n${notes}\n`;
+
+  // --- 2. Save TXT file ---
+  const txtBlob = new Blob([summary], { type: "text/plain" });
+  const txtUrl = URL.createObjectURL(txtBlob);
+  const txtLink = document.createElement("a");
+  txtLink.href = txtUrl;
+  txtLink.download = `Specimen_${specimen.id}_Session.txt`;
+  txtLink.click();
+
+  // --- 3. Save Frozen Chart as PNG ---
+  if (frozenCanvas) {
+    const imgUrl = frozenCanvas.toDataURL("image/png");
+    const imgLink = document.createElement("a");
+    imgLink.href = imgUrl;
+    imgLink.download = `Specimen_${specimen.id}_Vitals.png`;
+    imgLink.click();
+  }
+  }
   exportCaseData(notes); // Save TXT + PNG (with notes)
+  function sendToLab2(){
+  exportCaseData(); // save both txt + png before leaving
+  window.location.href = "lab2.html"; 
+}
+
+function sendToLab3(){
+  exportCaseData(); // save both txt + png before leaving
+  window.location.href = "lab3.html";
+}
 
   const caseObj = { 
     id: specimen.id, 
