@@ -463,12 +463,12 @@ function sendToLab3(){
   // Go to Lab 3
   window.location.href = 'lab3.html';
 }
-
-$('#saveAndToLab3').addEventListener('click', ()=>{// copy overlay notes back to main notes before send
+  $('#saveAndToLab3').addEventListener('click', ()=>{// copy overlay notes back to main notes before send
   $('#notes').value = $('#sumNotes').value;
   sendToLab3();
 });
-
+<a href="../lab1/index.html">Go to Lab 1</a>
+  
 /* Header nav buttons */
 $('#backLab1').addEventListener('click', ()=>{
   log('Returning to Lab 1…');
