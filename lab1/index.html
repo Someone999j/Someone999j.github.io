@@ -1,104 +1,119 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Lab 1 - Initial Examination</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lab 1 - Rat Study</title>
     <style>
         body {
-            margin: 0;
             font-family: Arial, sans-serif;
-            background: linear-gradient(to bottom right, #1a1a1a, #2d2d2d);
-            color: #fff;
+            margin: 0;
+            background-color: #e8f0f5;
             display: flex;
             flex-direction: column;
             align-items: center;
-            min-height: 100vh;
         }
 
         header {
             width: 100%;
-            padding: 1rem;
-            background: #222;
+            padding: 15px;
+            background-color: #2b3a67;
+            color: white;
             text-align: center;
-            font-size: 1.5rem;
-            font-weight: bold;
-            border-bottom: 2px solid #444;
         }
 
         nav {
-            margin: 1rem 0;
-            display: flex;
-            justify-content: space-between;
-            width: 80%;
+            margin: 10px;
         }
 
         nav button {
-            padding: 0.5rem 1rem;
-            background: #444;
-            color: white;
+            background-color: #4a5fc1;
             border: none;
-            border-radius: 5px;
+            color: white;
+            padding: 10px 15px;
+            margin: 0 5px;
             cursor: pointer;
-            transition: background 0.2s;
+            border-radius: 5px;
+            font-size: 14px;
         }
 
         nav button:hover {
-            background: #666;
+            background-color: #364796;
         }
 
         main {
             display: flex;
-            justify-content: space-between;
-            width: 80%;
-            margin-top: 2rem;
-            gap: 2rem;
+            flex-direction: row;
+            justify-content: space-around;
+            width: 90%;
+            margin-top: 20px;
         }
 
-        .panel {
+        .rat-container {
             flex: 1;
-            background: #333;
-            padding: 1rem;
-            border-radius: 8px;
-            box-shadow: 0 0 10px rgba(0,0,0,0.5);
+            text-align: center;
         }
 
-        .rat-visual {
-            background: #222;
-            height: 300px;
+        .rat {
+            width: 250px;
+            animation: breathe 3s infinite ease-in-out;
+        }
+
+        @keyframes breathe {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        .vitals {
+            flex: 1;
+            background-color: white;
+            padding: 15px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+
+        .vitals h2 {
+            margin-top: 0;
+        }
+
+        .placeholder {
+            background-color: #f4f4f4;
+            height: 200px;
             display: flex;
             justify-content: center;
             align-items: center;
-            border-radius: 8px;
+            border: 2px dashed #ccc;
+            border-radius: 10px;
+            color: #888;
+            font-style: italic;
         }
     </style>
 </head>
 <body>
-    <header>Lab 1 - Initial Examination</header>
+    <header>
+        <h1>Lab 1 - Rat Study</h1>
+    </header>
 
     <nav>
-        <button onclick="window.location.href='index.html'">🏠 Home</button>
-        <button onclick="window.location.href='Lab%202/index.html'">➡ Go to Lab 2</button>
+        <button onclick="location.href='../index.html'">🏠 Home</button>
+        <button onclick="location.href='../lab2/index.html'">➡️ Lab 2</button>
     </nav>
 
     <main>
-        <!-- Left panel: Rat visual -->
-        <div class="panel">
-            <div class="rat-visual">
-                <!-- Replace this with same rat image from Lab 2 -->
-                <img src="rat_lab2.png" alt="Lab Rat" style="max-height: 100%; max-width: 100%;">
-            </div>
+        <div class="rat-container">
+            <img src="../images/rat.png" alt="Lab Rat" class="rat">
+            <p>Subject ID: #001</p>
         </div>
 
-        <!-- Right panel: Case info -->
-        <div class="panel">
-            <h2>// New Subject //</h2>
-            <p>
-                Subject arrival and initial containment complete. Begin preliminary observations.  
-                Ensure environment is stable before administering any substance.  
-                All baseline vitals should be recorded before proceeding to the next stage.
-            </p>
+        <div class="vitals">
+            <h2>Vitals</h2>
+            <div class="placeholder">Live chart will go here</div>
         </div>
     </main>
-</body> 
-</html> 
+
+    <script>
+        // Placeholder for future live chart & vitals update
+        console.log("Lab 1 loaded - live chart script will be added later.");
+    </script>
+</body>
+</html>
