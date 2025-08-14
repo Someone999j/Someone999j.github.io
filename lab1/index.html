@@ -1,40 +1,195 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lab 1 - Rat Study</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 0;
-            background-color: #e8f0f5;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Lab 1 — Genetic Study (Skeleton, CSS Rat)</title>
+  <style>
+    :root{
+      --bg1:#0b1220; --bg2:#1b2436;
+      --panel:#0e1626; --panel2:#111a2d;
+      --accent:#60a5fa; --muted:#93a4bd;
+      --rat:#e6e1dd; --ear:#ffd7e5; --tail:#f1cdbd; --eye:#0b1220;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%;margin:0;font-family:Inter,system-ui,Segoe UI,Roboto,Arial}
+    body{
+      background: radial-gradient(80vw 80vh at 50% -10%, #223154 0%, #0b1220 50%) fixed,
+                  linear-gradient(180deg,var(--bg1),var(--bg2));
+      color:#eaf2ff;
+    }
+    header{
+      display:flex;align-items:center;justify-content:space-between;
+      padding:12px 16px;background:rgba(10,16,28,.55);backdrop-filter:blur(6px);
+      border-bottom:1px solid rgba(255,255,255,.06)
+    }
+    header .nav a{
+      color:var(--accent);text-decoration:none;font-weight:700;margin-right:14px
+    }
+    header .nav a:hover{color:#fff}
+    .wrap{display:grid;grid-template-columns:1.5fr 1fr;gap:14px;max-width:1200px;margin:12px auto;padding:12px}
+    .card{background:linear-gradient(180deg,var(--panel),var(--panel2));border:1px solid rgba(255,255,255,.06);border-radius:14px;box-shadow:0 10px 30px rgba(0,0,0,.35)}
+    .left{min-height:520px;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden}
+    .right{padding:14px}
+    h1{font-size:18px;margin:0}
+    h2{font-size:16px;margin:0 0 8px}
+    p{color:var(--muted);margin:6px 0}
 
-        header {
-            width: 100%;
-            padding: 15px;
-            background-color: #2b3a67;
-            color: white;
-            text-align: center;
-        }
+    /* ===== CSS RAT (pure divs) ===== */
+    .stage{
+      width:360px;height:300px;position:relative;
+      display:flex;align-items:center;justify-content:center;
+      transform: translateZ(0);
+    }
+    .rat{
+      position:relative;width:260px;height:200px;
+      filter: drop-shadow(0 12px 18px rgba(0,0,0,.45));
+    }
+    /* body */
+    .rat__body{
+      position:absolute;left:70px;top:70px;width:150px;height:100px;
+      background:var(--rat);border-radius:90px 100px 70px 70px;
+      animation:breathe 2.6s ease-in-out infinite;
+    }
+    /* head */
+    .rat__head{
+      position:absolute;left:24px;top:42px;width:86px;height:86px;
+      background:var(--rat);border-radius:50%;
+      transform-origin:60% 60%;
+      animation:headIdle 3.2s ease-in-out infinite;
+    }
+    /* ears */
+    .ear{position:absolute;width:26px;height:22px;background:var(--ear);border-radius:50%}
+    .ear--l{left:6px;top:6px}
+    .ear--r{right:6px;top:8px}
+    /* eyes */
+    .eye{position:absolute;width:8px;height:8px;background:var(--eye);border-radius:50%;top:38px}
+    .eye--l{left:26px} .eye--r{right:26px}
+    /* tail */
+    .tail{
+      position:absolute;right:-22px;top:130px;width:12px;height:120px;background:var(--tail);border-radius:12px;
+      transform-origin:left top; transform:rotate(18deg);
+      animation:tailWave 2.4s ease-in-out infinite;
+    }
+    /* tiny paws (suggested) */
+    .paw{position:absolute;width:12px;height:8px;border-radius:8px;background:#d7d2cf;bottom:24px}
+    .paw--f{left:120px} .paw--b{left:170px}
 
-        nav {
-            margin: 10px;
-        }
+    /* bubble */
+    .bubble{
+      position:absolute;left:36px;top:8px;background:rgba(0,0,0,.6);color:#fff;
+      padding:6px 8px;border-radius:10px;font-size:12px;display:none
+    }
 
-        nav button {
-            background-color: #4a5fc1;
-            border: none;
-            color: white;
-            padding: 10px 15px;
-            margin: 0 5px;
-            cursor: pointer;
-            border-radius: 5px;
-            font-size: 14px;
+    /* ground */
+    .ground{
+      position:absolute;left:30px;right:30px;bottom:22px;height:2px;background:linear-gradient(90deg,transparent,#3a517f,transparent)
+    }
+
+    /* animations */
+    @keyframes breathe {0%{transform:scale(1)}50%{transform:scale(1.03)}100%{transform:scale(1)}}
+    @keyframes headIdle {0%{transform:rotate(0)}50%{transform:rotate(2deg)}100%{transform:rotate(0)}}
+    @keyframes tailWave {0%{transform:rotate(16deg)}50%{transform:rotate(22deg)}100%{transform:rotate(16deg)}}
+    .twitch { animation: twitch 0.9s steps(2) 1 }
+    @keyframes twitch {0%{transform:translateY(0)}50%{transform:translateY(-3px)}100%{transform:translateY(0)}}
+    .head-tilt { transform:rotate(6deg) }
+    .ear-pale .ear{ background:#f3d6d6 }
+    .confuse { animation: confuse 1.2s ease-in-out 1 }
+    @keyframes confuse {0%{transform:translateX(0)}50%{transform:translateX(2px)}100%{transform:translateX(0)}}
+
+    /* footer nav-ish */
+    .navrow{display:flex;gap:10px;margin-top:10px}
+    .btn{appearance:none;border:1px solid rgba(255,255,255,.1);background:transparent;color:#eaf2ff;
+         padding:8px 12px;border-radius:10px;cursor:pointer}
+    .btn:hover{border-color:rgba(255,255,255,.25)}
+    .link{color:var(--accent);text-decoration:none}
+  </style>
+</head>
+<body>
+  <header>
+    <div class="nav">
+      <a href="../index.html">Home</a>
+      <a href="../lab2/index.html">→ Lab 2</a>
+    </div>
+    <h1>Lab 1 — Genetic Study (Skeleton)</h1>
+  </header>
+
+  <main class="wrap">
+    <!-- Left: visual stage -->
+    <section class="card left">
+      <div class="stage" aria-label="Specimen visual">
+        <div id="bubble" class="bubble">eek!</div>
+        <div id="rat" class="rat" role="img" aria-label="Animated lab specimen">
+          <div id="body" class="rat__body"></div>
+          <div id="head" class="rat__head">
+            <div class="ear ear--l"></div>
+            <div class="ear ear--r"></div>
+            <div class="eye eye--l"></div>
+            <div class="eye eye--r"></div>
+          </div>
+          <div id="tail" class="tail"></div>
+          <div class="paw paw--f"></div>
+          <div class="paw paw--b"></div>
+        </div>
+        <div class="ground"></div>
+      </div>
+    </section>
+
+    <!-- Right: placeholder panel (we'll fill with vitals/tools later) -->
+    <aside class="card right">
+      <h2>Case Panel</h2>
+      <p>This is the clean base. No images used — the specimen is pure HTML/CSS.</p>
+      <p>Next step: add vitals/live chart, drug controls, and neutral “session summary” exporter.</p>
+
+      <div class="navrow">
+        <a class="link" href="../index.html">← Home</a>
+        <a class="link" href="../lab2/index.html">Lab 2 →</a>
+        <button id="pokeBtn" class="btn">Poke (test animation)</button>
+        <button id="hintBtn" class="btn">Subtle Visual Hint</button>
+      </div>
+    </aside>
+  </main>
+
+  <script>
+    // simple JS to prove the CSS rat is alive & controllable
+    const head = document.getElementById('head');
+    const body = document.getElementById('body');
+    const bubble = document.getElementById('bubble');
+    const rat = document.getElementById('rat');
+
+    function bubbleSay(text, ms=800){
+      bubble.textContent = text;
+      bubble.style.display = 'block';
+      setTimeout(()=> bubble.style.display='none', ms);
+    }
+
+    // test animation (like tapping the glass)
+    document.getElementById('pokeBtn').addEventListener('click', ()=>{
+      body.classList.remove('twitch'); void body.offsetWidth; // restart anim
+      body.classList.add('twitch');
+      bubbleSay('eek!', 700);
+    });
+
+    // subtle “mutation-style” visual hints (neutral, no labels)
+    const hintModes = [
+      () => { head.classList.add('head-tilt'); setTimeout(()=> head.classList.remove('head-tilt'), 900); },
+      () => { rat.classList.add('confuse'); setTimeout(()=> rat.classList.remove('confuse'), 900); },
+      () => { rat.classList.add('ear-pale'); setTimeout(()=> rat.classList.remove('ear-pale'), 1600); }
+    ];
+    document.getElementById('hintBtn').addEventListener('click', ()=>{
+      const f = hintModes[Math.floor(Math.random()*hintModes.length)];
+      f(); bubbleSay('...', 600);
+    });
+
+    // (Optional) click anywhere on the left card to twitch slightly
+    document.querySelector('.left').addEventListener('click', (e)=>{
+      if (e.target.closest('.btn, a')) return;
+      body.classList.remove('twitch'); void body.offsetWidth;
+      body.classList.add('twitch');
+    });
+  </script>
+</body>
+</html>            font-size: 14px;
         }
 
         nav button:hover {
